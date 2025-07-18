@@ -144,7 +144,7 @@ export const cruises: Cruise[] = [
     description: "Sophisticated cruising with enrichment programs and culinary excellence.",
     shipType: "Premium Ship",
     cruiseLine: "Holland America Line"
-  }
+  },
   {
     id: "9",
     name: "Anthem of the Seas",
