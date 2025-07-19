@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, ArrowLeft, Anchor } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import { useNotifications } from '../hooks/useNotifications';
 
 interface LoginPageProps {
   onNavigate: (page: 'home' | 'login' | 'signup') => void;
@@ -7,7 +9,11 @@ interface LoginPageProps {
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLoginSuccess }) => {
+  const { login } = useAuth();
+  const { showLoginSuccess, showLoginError } = useNotifications();
+  
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -52,25 +58,39 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLoginSuccess }) => 
   };
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic validation
     if (!formData.email || !formData.password) {
-      alert('Please fill in all fields.');
+      showLoginError();
       return;
     }
     
-    // Find matching demo credential
-    const matchedCredential = demoCredentials.find(
-      cred => cred.email === formData.email && cred.password === formData.password
-    );
 
-    if (matchedCredential) {
-      // Call the login success handler with the user role
-      onLoginSuccess(matchedCredential.role);
-    } else {
-      alert('Invalid credentials. Please use the demo credentials provided or check your email and password.');
+    setLoading(true);
+    
+    try {
+      const success = await login(formData.email, formData.password);
+      
+      if (success) {
+        // Find the role for the logged-in user
+        const matchedCredential = demoCredentials.find(
+          cred => cred.email === formData.email
+        );
+        
+        if (matchedCredential) {
+          showLoginSuccess(matchedCredential.role);
+          onLoginSuccess(matchedCredential.role);
+        }
+      } else {
+        showLoginError();
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      showLoginError();
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -210,9 +230,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigate, onLoginSuccess }) => 
               {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-500 to-teal-500 text-white py-3 px-4 rounded-lg font-semibold hover:from-blue-600 hover:to-teal-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-blue-500 to-teal-500 text-white py-3 px-4 rounded-lg font-semibold hover:from-blue-600 hover:to-teal-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
-                Sign In
+                {loading ? 'Signing In...' : 'Sign In'}
               </button>
             </form>
 

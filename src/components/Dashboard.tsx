@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, notification } from 'antd';
+import { Button } from 'antd';
 import Sidebar from './Sidebar';
 import TopNavbar from './TopNavbar';
 import SearchSection from './SearchSection';
@@ -11,6 +11,9 @@ import BasicAdminDashboard from './BasicAdminDashboard';
 import SuperAdminDashboard from './SuperAdminDashboard';
 import { cruises, destinations, cruiseLines, shipTypes, months } from '../data/cruises';
 import type { Cruise } from '../data/cruises';
+import { useBookings } from '../hooks/useBookings';
+import { useNotifications } from '../hooks/useNotifications';
+import { CruiseService } from '../services/mockDataService';
 
 interface DashboardProps {
   userRole: string;
@@ -26,6 +29,9 @@ interface SearchFilters {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ userRole, onLogout }) => {
+  const { bookings, cancelBooking } = useBookings();
+  const { showCancellationSuccess, showError } = useNotifications();
+  
   // Sidebar state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
@@ -35,8 +41,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, onLogout }) => {
   // Loading states
   const [loading, setLoading] = useState(false);
   
-  // Bookings state (mock data for demonstration)
-  const [userBookings, setUserBookings] = useState<string[]>([]);
+  // Cruise data state
+  const [cruiseData, setCruiseData] = useState(cruises);
   
   // Search filters state
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
@@ -61,7 +67,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, onLogout }) => {
   const [showSuperAdminDashboard, setShowSuperAdminDashboard] = useState(false);
 
   // Filter cruises based on search criteria
-  const filteredCruises = cruises.filter(cruise => {
+  const filteredCruises = cruiseData.filter(cruise => {
     const matchesSearch = cruise.name.toLowerCase().includes(searchFilters.searchText.toLowerCase()) ||
                          cruise.description.toLowerCase().includes(searchFilters.searchText.toLowerCase());
     
@@ -83,39 +89,28 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, onLogout }) => {
     setSelectedCruise(cruise);
   };
 
-  const handleCancelBooking = async (cruiseId: string) => {
+  const handleCancelBooking = async (bookingId: string) => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const success = await cancelBooking(bookingId);
       
-      // Remove from user bookings
-      setUserBookings(prev => prev.filter(id => id !== cruiseId));
-      
-      notification.success({
-        message: 'Booking Cancelled',
-        description: 'Your cruise booking has been successfully cancelled.',
-        placement: 'topRight'
-      });
+      if (success) {
+        showCancellationSuccess(bookingId);
+      } else {
+        showError('Cancellation Failed', 'Unable to cancel booking. Please try again.');
+      }
     } catch (error) {
-      notification.error({
-        message: 'Cancellation Failed',
-        description: 'Unable to cancel booking. Please try again.',
-        placement: 'topRight'
-      });
+      console.error('Cancellation error:', error);
+      showError('Cancellation Failed', 'Unable to cancel booking. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   // Handle successful booking
-  const handleBookingSuccess = (cruiseId: string) => {
-    setUserBookings(prev => [...prev, cruiseId]);
-    notification.success({
-      message: 'Booking Confirmed',
-      description: 'Your cruise booking has been confirmed successfully!',
-      placement: 'topRight'
-    });
+  const handleBookingSuccess = () => {
+    // Booking success is handled by the modal component and notifications hook
+    // No additional action needed here
   };
 
   const handleCloseModal = () => {
@@ -281,10 +276,10 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, onLogout }) => {
           {/* Results Summary */}
           <div className="mb-6">
             <p className="text-gray-600">
-              Showing {filteredCruises.length} of {cruises.length} cruises
-              {userBookings.length > 0 && (
+              Showing {filteredCruises.length} of {cruiseData.length} cruises
+              {bookings.length > 0 && (
                 <span className="ml-4 text-blue-600">
-                  • {userBookings.length} active booking{userBookings.length !== 1 ? 's' : ''}
+                  • {bookings.length} active booking{bookings.length !== 1 ? 's' : ''}
                 </span>
               )}
             </p>
@@ -293,12 +288,16 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, onLogout }) => {
           {/* Cruise Cards Grid */}
           <div className="space-y-6">
             {filteredCruises.map((cruise) => (
+              const userBooking = bookings.find(booking => 
+                booking.itemId === cruise.id && booking.status !== 'Cancelled'
+              );
+              
               <CruiseCard
                 key={cruise.id}
                 cruise={cruise}
                 onViewDetails={handleViewDetails}
-                onCancel={handleCancelBooking}
-                isBooked={userBookings.includes(cruise.id)}
+                onCancel={() => userBooking && handleCancelBooking(userBooking.id)}
+                isBooked={!!userBooking}
                 loading={loading}
               />
             ))}
@@ -324,7 +323,9 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, onLogout }) => {
           cruise={selectedCruise}
           onClose={handleCloseModal}
           onBookingSuccess={handleBookingSuccess}
-          isBooked={userBookings.includes(selectedCruise.id)}
+          isBooked={!!bookings.find(booking => 
+            booking.itemId === selectedCruise.id && booking.status !== 'Cancelled'
+          )}
         />
       )}
     </div>

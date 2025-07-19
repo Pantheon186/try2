@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { X, Calendar, Users, Utensils, Bed, Ship, Star } from 'lucide-react';
 import { Cruise } from '../data/cruises';
+import { useBookings } from '../hooks/useBookings';
+import { useNotifications } from '../hooks/useNotifications';
+import { useAuth } from '../hooks/useAuth';
 
 interface CruiseModalProps {
   cruise: Cruise;
@@ -21,6 +24,10 @@ interface BookingForm {
 }
 
 const CruiseModal: React.FC<CruiseModalProps> = ({ cruise, onClose, onBookingSuccess, isBooked = false }) => {
+  const { createBooking } = useBookings();
+  const { showBookingSuccess, showBookingError } = useNotifications();
+  const { user } = useAuth();
+  
   // Booking flow state
   const [currentStep, setCurrentStep] = useState<'selection' | 'details' | 'confirmation'>(isBooked ? 'confirmation' : 'selection');
   
@@ -93,47 +100,80 @@ const CruiseModal: React.FC<CruiseModalProps> = ({ cruise, onClose, onBookingSuc
       return;
     }
     
+    if (!user) {
+      showBookingError(cruise.name, 'Please log in to make a booking.');
+      return;
+    }
+    
     // Validate form
     if (!bookingForm.name || !bookingForm.email || !bookingForm.phone || !bookingForm.address) {
-      alert('Please fill in all required fields.');
+      showBookingError(cruise.name, 'Please fill in all required fields.');
       return;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(bookingForm.email)) {
-      alert('Please enter a valid email address.');
+      showBookingError(cruise.name, 'Please enter a valid email address.');
       return;
     }
 
     // Phone validation
     const phoneRegex = /^[0-9]{10}$/;
     if (!phoneRegex.test(bookingForm.phone.replace(/\D/g, ''))) {
-      alert('Please enter a valid 10-digit phone number.');
+      showBookingError(cruise.name, 'Please enter a valid 10-digit phone number.');
       return;
     }
 
     setLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Create booking using the booking service
+      const bookingData = {
+        type: 'Cruise' as const,
+        itemId: cruise.id,
+        itemName: cruise.name,
+        agentId: user.id,
+        agentName: user.name,
+        customerName: bookingForm.name,
+        customerEmail: bookingForm.email,
+        customerPhone: bookingForm.phone,
+        bookingDate: new Date().toISOString().split('T')[0],
+        travelDate: bookingForm.departureDate,
+        status: 'Confirmed' as const,
+        totalAmount: calculateTotalPrice(),
+        commissionAmount: Math.round(calculateTotalPrice() * 0.05), // 5% commission
+        paymentStatus: 'Paid' as const,
+        guests: bookingForm.passengerCount,
+        specialRequests: `Room: ${bookingForm.roomType}, Meal: ${bookingForm.mealPlan}`,
+        region: user.role === 'Travel Agent' ? 'Delhi' : 'Mumbai' // Mock region assignment
+      };
+
+      const newBooking = await createBooking(bookingData);
       
-      // Show confirmation step
-      setCurrentStep('confirmation');
-      
-      // Call success callback
-      if (onBookingSuccess) {
-        onBookingSuccess(cruise.id);
+      if (newBooking) {
+        // Show confirmation step
+        setCurrentStep('confirmation');
+        
+        // Show success notification
+        showBookingSuccess(newBooking.id, cruise.name);
+        
+        // Call success callback
+        if (onBookingSuccess) {
+          onBookingSuccess(cruise.id);
+        }
+        
+        // Auto close after showing confirmation
+        setTimeout(() => {
+          onClose();
+        }, 3000);
+      } else {
+        throw new Error('Failed to create booking');
       }
       
-      // Auto close after showing confirmation
-      setTimeout(() => {
-        onClose();
-      }, 3000);
-      
     } catch (error) {
-      alert('Booking failed. Please try again.');
+      console.error('Booking error:', error);
+      showBookingError(cruise.name, 'Booking failed. Please try again or contact support.');
     } finally {
       setLoading(false);
     }
