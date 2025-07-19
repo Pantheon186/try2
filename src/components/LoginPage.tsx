@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, ArrowLeft, Anchor } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../hooks/useAuth.tsx';
 import { useNotifications } from '../hooks/useNotifications';
 
 interface LoginPageProps {

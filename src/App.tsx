@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AuthProvider } from './hooks/useAuth';
+import { AuthProvider } from './hooks/useAuth.tsx';
 import NotificationCenter from './components/NotificationCenter';
 import Dashboard from './components/Dashboard';
 import Header from './components/Header';

@@ -10,7 +10,7 @@ import HotelDashboard from './HotelDashboard';
 import BasicAdminDashboard from './BasicAdminDashboard';
 import SuperAdminDashboard from './SuperAdminDashboard';
 import { cruises, destinations, cruiseLines, shipTypes, months } from '../data/cruises';
-import type { Cruise } from '../data/cruises';
+import { useAuth } from '../hooks/useAuth.tsx';
 import { useBookings } from '../hooks/useBookings';
 import { useNotifications } from '../hooks/useNotifications';
 import { CruiseService } from '../services/mockDataService';
