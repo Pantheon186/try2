@@ -1,11 +1,15 @@
 // Service Status Indicator Component
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../config/supabase';
+import { SupabaseService } from '../../services/SupabaseService';
+import { config } from '../../config/environment';
+import { DataSeeder } from '../../services/dataSeeder';
 
 const ServiceStatus: React.FC = () => {
   const [status, setStatus] = useState({
     supabaseConnected: false,
-    lastCheck: new Date()
+    dataSource: 'unknown' as 'supabase' | 'localStorage' | 'unknown',
+    lastCheck: new Date(),
+    dataCount: { cruises: 0, users: 0, bookings: 0 }
   });
   const [isVisible, setIsVisible] = useState(false);
 
@@ -14,18 +18,22 @@ const ServiceStatus: React.FC = () => {
     const shouldShow = import.meta.env.MODE === 'development';
     setIsVisible(shouldShow);
 
-    // Check Supabase connection
+    // Check service connection and data status
     const checkConnection = async () => {
       try {
-        const { data, error } = await supabase.from('users').select('count').limit(1);
+        const dataStatus = await DataSeeder.getDataStatus();
         setStatus({
-          supabaseConnected: !error,
-          lastCheck: new Date()
+          supabaseConnected: dataStatus.source === 'supabase',
+          dataSource: dataStatus.source as 'supabase' | 'localStorage' | 'unknown',
+          lastCheck: new Date(),
+          dataCount: dataStatus.dataCount || { cruises: 0, users: 0, bookings: 0 }
         });
       } catch (error) {
         setStatus({
           supabaseConnected: false,
-          lastCheck: new Date()
+          dataSource: 'unknown',
+          lastCheck: new Date(),
+          dataCount: { cruises: 0, users: 0, bookings: 0 }
         });
       }
     };
@@ -43,26 +51,31 @@ const ServiceStatus: React.FC = () => {
   if (!isVisible) return null;
 
   const getStatusColor = () => {
-    if (status.supabaseConnected) {
+    if (status.dataSource === 'supabase') {
       return 'bg-green-500';
+    } else if (status.dataSource === 'localStorage') {
+      return 'bg-yellow-500';
     } else {
       return 'bg-red-500';
     }
   };
 
   const getStatusText = () => {
-    if (status.supabaseConnected) {
-      return 'Connected to Database';
-    } else {
-      return 'Database Unavailable';
+    switch (status.dataSource) {
+      case 'supabase':
+        return `Supabase Connected (${status.dataCount.users} users, ${status.dataCount.cruises} cruises)`;
+      case 'localStorage':
+        return `Demo Mode (${status.dataCount.users} users, ${status.dataCount.bookings} bookings)`;
+      default:
+        return 'No Data Source';
     }
   };
 
   return (
     <div className="fixed bottom-4 left-4 z-50">
-      <div className="bg-white/90 backdrop-blur-md rounded-lg border border-gray-200 shadow-lg p-3 flex items-center gap-2">
+      <div className="bg-white/90 backdrop-blur-md rounded-lg border border-gray-200 shadow-lg p-3 flex items-center gap-2 max-w-xs">
         <div className={`w-2 h-2 rounded-full ${getStatusColor()}`}></div>
-        <span className="text-xs font-medium text-gray-700">
+        <span className="text-xs font-medium text-gray-700 truncate">
           {getStatusText()}
         </span>
         {import.meta.env.MODE === 'development' && (

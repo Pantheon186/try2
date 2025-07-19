@@ -11,6 +11,7 @@ import CTABanner from './components/CTABanner';
 import FloatingHelp from './components/FloatingHelp';
 import LoginPage from './components/LoginPage';
 import SignUpPage from './components/SignUpPage';
+import ServiceStatus from './components/common/ServiceStatus';
 import { DataSeeder } from './services/dataSeeder';
 
 function App() {
@@ -80,6 +81,9 @@ function App() {
       <AuthProvider>
         {/* Notification Center */}
         <NotificationCenter />
+        
+        {/* Service Status Indicator */}
+        <ServiceStatus />
         
         {/* Render current page */}
         {currentPage === 'login' && (

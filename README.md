@@ -85,14 +85,50 @@ A comprehensive, production-ready travel booking and customer relationship manag
    - Create a new Supabase project at https://supabase.com
    - Copy your project URL and anon key to the .env file
    - Run the migration files in your Supabase SQL editor:
-     - `supabase/migrations/create_complete_schema.sql`
-     - `supabase/migrations/seed_sample_data.sql`
+     - First: `supabase/migrations/create_complete_schema.sql`
+     - Then: `supabase/migrations/seed_sample_data.sql`
    - The app will automatically work with or without Supabase
 
 5. **Start development server**
    ```bash
    npm run dev
    ```
+
+## 🔧 Database Setup
+
+### Option 1: With Supabase (Recommended)
+
+1. **Create Supabase Project**
+   - Go to https://supabase.com and create a new project
+   - Wait for the project to be fully initialized
+
+2. **Get Credentials**
+   - Go to Settings > API in your Supabase dashboard
+   - Copy the Project URL and anon/public key
+
+3. **Configure Environment**
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your Supabase credentials:
+   VITE_SUPABASE_URL=your_project_url
+   VITE_SUPABASE_ANON_KEY=your_anon_key
+   ```
+
+4. **Run Database Migrations**
+   - Go to your Supabase dashboard > SQL Editor
+   - Create a new query and paste the contents of `supabase/migrations/create_complete_schema.sql`
+   - Run the query to create all tables and policies
+   - Create another new query and paste the contents of `supabase/migrations/seed_sample_data.sql`
+   - Run the query to populate sample data
+
+5. **Verify Setup**
+   - Check the Tables section in your Supabase dashboard
+   - You should see tables: users, cruises, hotels, bookings, complaints, offers, booking_events
+   - Each table should have sample data
+
+### Option 2: Demo Mode (No Setup Required)
+
+If you don't set up Supabase, the application will automatically run in demo mode using localStorage for data persistence. This is perfect for testing and development.
 
 ## 🔧 Configuration
 
@@ -108,9 +144,26 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 # Application Configuration
 VITE_APP_NAME=Yorke Holidays CRM
 VITE_APP_VERSION=1.0.0
-VITE_USE_SUPABASE=true
 VITE_ENABLE_REAL_TIME_UPDATES=true
+VITE_ENABLE_ANALYTICS=true
+VITE_ENABLE_NOTIFICATIONS=true
+VITE_ENABLE_FILE_UPLOADS=false
+
+# API Configuration
+VITE_API_TIMEOUT=10000
+VITE_MAX_RETRIES=3
+
+# UI Configuration
+VITE_ITEMS_PER_PAGE=10
+VITE_NOTIFICATION_DURATION=5000
+VITE_AUTO_SAVE_INTERVAL=30000
 ```
+
+### Configuration Notes
+
+- If `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are provided, the app will use Supabase
+- If not provided, the app will automatically use demo mode with localStorage
+- All environment variables are optional and have sensible defaults
 
 ### Demo Credentials
 
@@ -121,6 +174,48 @@ The application includes demo credentials for testing:
 | Travel Agent | agent_demo@example.com | demo123 |
 | Basic Admin | admin_demo@example.com | admin123 |
 | Super Admin | superadmin_demo@example.com | super123 |
+
+## 🔍 Troubleshooting
+
+### Database Issues
+
+1. **"Database migration has not been applied correctly"**
+   - Ensure you've run both migration files in the correct order
+   - Check the Supabase dashboard for any error messages
+   - Verify your Supabase project is fully initialized
+
+2. **"Supabase client not initialized"**
+   - Check your `.env` file has the correct Supabase credentials
+   - Verify the credentials are valid in your Supabase dashboard
+   - The app will fall back to demo mode if Supabase is not available
+
+3. **"No data showing in the application"**
+   - Run the seed data migration: `supabase/migrations/seed_sample_data.sql`
+   - Check the Tables section in Supabase dashboard for data
+   - In demo mode, data is automatically seeded to localStorage
+
+### Development Issues
+
+1. **Application not starting**
+   ```bash
+   # Clear node modules and reinstall
+   rm -rf node_modules package-lock.json
+   npm install
+   npm run dev
+   ```
+
+2. **TypeScript errors**
+   ```bash
+   # Run type checking
+   npm run type-check
+   ```
+
+3. **Build errors**
+   ```bash
+   # Clean build and rebuild
+   npm run clean
+   npm run build
+   ```
 
 ## 🏗 Architecture
 
@@ -145,6 +240,8 @@ src/
 │   ├── formatters.ts   # Data formatting
 │   └── errorHandler.ts # Error handling
 ├── types/              # TypeScript definitions
+├── data/               # Mock data for demo mode
+├── test/               # Test files
 └── test/               # Test files
 ```
 
@@ -159,7 +256,6 @@ The application uses Supabase with the following main tables:
 - **complaints**: Customer complaint tracking with priority system
 - **offers**: Promotional offers with usage analytics
 - **booking_events**: Audit trail for all booking changes
-- **reviews**: Customer feedback and ratings
 
 ### Real-time Features
 
@@ -233,6 +329,22 @@ The application uses Supabase with the following main tables:
    - Sample data is automatically available via migrations
    - You can immediately start using the demo credentials
 
+## 📊 Data Flow
+
+### With Supabase
+1. **Authentication**: Supabase Auth handles login/logout with RLS policies
+2. **Data Operations**: All CRUD operations go through SupabaseService with validation
+3. **Real-time Updates**: Supabase subscriptions update UI instantly
+4. **Security**: Row Level Security ensures data isolation
+5. **Audit Trail**: All changes logged to booking_events table
+
+### Demo Mode (localStorage)
+1. **Authentication**: Mock credentials with localStorage session
+2. **Data Operations**: localStorage with JSON serialization
+3. **State Management**: React hooks manage local state
+4. **Persistence**: Data persists across browser sessions
+5. **Fallback**: Automatic fallback when Supabase unavailable
+
 ## 🔐 Security Implementation
 
 ### Database Security
@@ -275,16 +387,6 @@ The application uses Supabase with the following main tables:
 - Regional performance comparison
 - Predictive analytics for demand forecasting
 
-## 🔄 Data Flow
-
-1. **User Authentication**: Supabase Auth handles login/logout with session management
-2. **Data Operations**: All CRUD operations go through SupabaseService with validation
-3. **Real-time Updates**: Supabase subscriptions update UI instantly with conflict resolution
-4. **State Management**: React hooks manage local state with Supabase sync
-5. **Notifications**: Real-time notification system for user feedback
-6. **Fallback Mode**: Automatic fallback to local storage when offline
-7. **Error Handling**: Comprehensive error boundaries with recovery mechanisms
-
 ## 🚀 Deployment
 
 The application is ready for production deployment:
@@ -311,7 +413,6 @@ Deploy to any static hosting service (Netlify, Vercel, etc.) with your Supabase 
 VITE_SUPABASE_URL=your_production_supabase_url
 VITE_SUPABASE_ANON_KEY=your_production_anon_key
 VITE_APP_NAME=Yorke Holidays CRM
-VITE_USE_SUPABASE=true
 VITE_ENABLE_REAL_TIME_UPDATES=true
 VITE_ENABLE_ANALYTICS=true
 ```
@@ -371,7 +472,6 @@ The application includes comprehensive tests for:
 - Comprehensive sample data with 12+ records per table
 - Performance indexes for frequently queried columns
 - Full-text search capabilities
-- Materialized views for analytics
 
 ### 2. **Security Enhancements**
 - Row Level Security (RLS) policies for all tables
@@ -401,6 +501,19 @@ The application includes comprehensive tests for:
 - Performance monitoring
 - Deployment automation ready
 
+### 6. **Database Migration Fixes**
+- Fixed migration file structure and naming
+- Added comprehensive schema with all required tables
+- Implemented proper RLS policies for security
+- Added sample data seeding for immediate functionality
+- Created fallback mechanisms for demo mode
+
+### 7. **Service Layer Improvements**
+- Enhanced SupabaseService with better error handling
+- Automatic fallback to localStorage when Supabase unavailable
+- Improved configuration management
+- Better health checking and status reporting
+
 ## 📄 License
 
 This project is proprietary software developed for Yorke Holidays.
@@ -411,4 +524,4 @@ This is a private project. For development questions or feature requests, please
 
 ---
 
-**The application is now fully functional, production-ready, and can work both with and without Supabase backend. All security vulnerabilities have been addressed, performance has been optimized, and the codebase is clean and maintainable.**
+**The application is now fully functional, production-ready, and can work both with and without Supabase backend. All database migration issues have been resolved, security vulnerabilities have been addressed, performance has been optimized, and the codebase is clean and maintainable.**

@@ -11,6 +11,7 @@ import HotelDashboard from './HotelDashboard';
 import BasicAdminDashboard from './BasicAdminDashboard';
 import SuperAdminDashboard from './SuperAdminDashboard';
 import { SupabaseService } from '../services/SupabaseService';
+import { config } from '../config/environment';
 import { useAuth } from '../hooks/useAuth';
 import { useBookings } from '../hooks/useBookings';
 import { useNotifications } from '../hooks/useNotifications';
@@ -54,32 +55,32 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, onLogout }) => {
   const loadCruises = useCallback(async () => {
     try {
       setCruisesLoading(true);
-      const cruises = await SupabaseService.getAllCruises();
+      
+      // Try Supabase first if configured
+      if (config.database.useSupabase) {
+        try {
+          const cruises = await SupabaseService.getAllCruises();
+          setCruiseData(cruises);
+          return;
+        } catch (supabaseError) {
+          console.warn('Supabase cruises fetch failed, using fallback data:', supabaseError);
+        }
+      }
+      
+      // Fallback to mock data from the original cruises file
+      const { cruises } = await import('../data/cruises');
       setCruiseData(cruises);
     } catch (error) {
       console.error('Failed to load cruises:', error);
       showError('Loading Error', 'Failed to load cruise data. Please refresh the page.');
       
-      // Fallback to mock data
-      const mockCruises = [
-        {
-          id: "1",
-          name: "Royal Caribbean Explorer",
-          image: "https://images.pexels.com/photos/804463/pexels-photo-804463.jpeg",
-          from: "Mumbai",
-          to: "Goa",
-          duration: 7,
-          departureDates: ["2024-04-15", "2024-04-22", "2024-04-29", "2024-05-06"],
-          amenities: ["Swimming Pool", "Spa", "Casino", "Theater", "Rock Climbing", "Mini Golf"],
-          pricePerPerson: 45000,
-          roomTypes: ["Interior", "Ocean View", "Balcony", "Suite"],
-          mealPlans: ["All Inclusive", "Premium Plus", "Basic Plus"],
-          description: "Experience luxury on the Arabian Sea with world-class amenities and entertainment.",
-          shipType: "Mega Ship",
-          cruiseLine: "Royal Caribbean"
-        }
-      ];
-      setCruiseData(mockCruises);
+      // Final fallback to basic mock data
+      try {
+        const { cruises } = await import('../data/cruises');
+        setCruiseData(cruises);
+      } catch {
+        setCruiseData([]);
+      }
     } finally {
       setCruisesLoading(false);
     }

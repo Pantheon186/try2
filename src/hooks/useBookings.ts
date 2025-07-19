@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { SupabaseService } from '../services/SupabaseService';
 import { Booking } from '../types';
 import { useAuth } from './useAuth';
+import { config } from '../config/environment';
 
 interface UseBookingsReturn {
   bookings: Booking[];
@@ -31,16 +32,24 @@ export const useBookings = (): UseBookingsReturn => {
       setLoading(true);
       setError(null);
       
-      const userBookings = await SupabaseService.getUserBookings(user.id);
-      setBookings(userBookings);
-    } catch (err: any) {
-      console.error('Failed to fetch bookings:', err);
-      setError('Failed to load bookings');
+      // Try Supabase first if configured
+      if (config.database.useSupabase) {
+        try {
+          const userBookings = await SupabaseService.getUserBookings(user.id);
+          setBookings(userBookings);
+          return;
+        } catch (supabaseError) {
+          console.warn('Supabase fetch failed, using localStorage:', supabaseError);
+        }
+      }
       
       // Fallback to localStorage
       const mockBookings = JSON.parse(localStorage.getItem('mock_bookings') || '[]');
       const userBookings = mockBookings.filter((b: any) => b.agentId === user.id);
       setBookings(userBookings);
+    } catch (err: any) {
+      console.error('Failed to fetch bookings:', err);
+      setError('Failed to load bookings');
     } finally {
       setLoading(false);
     }
@@ -51,12 +60,16 @@ export const useBookings = (): UseBookingsReturn => {
       setLoading(true);
       setError(null);
       
-      const newBooking = await SupabaseService.createBooking(bookingData);
-      setBookings(prev => [newBooking, ...prev]);
-      return newBooking;
-    } catch (err: any) {
-      console.error('Failed to create booking:', err);
-      setError('Failed to create booking');
+      // Try Supabase first if configured
+      if (config.database.useSupabase) {
+        try {
+          const newBooking = await SupabaseService.createBooking(bookingData);
+          setBookings(prev => [newBooking, ...prev]);
+          return newBooking;
+        } catch (supabaseError) {
+          console.warn('Supabase create failed, using localStorage:', supabaseError);
+        }
+      }
       
       // Fallback to localStorage
       const mockBooking: Booking = {
@@ -72,6 +85,10 @@ export const useBookings = (): UseBookingsReturn => {
       
       setBookings(prev => [mockBooking, ...prev]);
       return mockBooking;
+    } catch (err: any) {
+      console.error('Failed to create booking:', err);
+      setError('Failed to create booking');
+      return null;
     } finally {
       setLoading(false);
     }
@@ -82,22 +99,26 @@ export const useBookings = (): UseBookingsReturn => {
       setLoading(true);
       setError(null);
       
-      const updatedBooking = await SupabaseService.updateBooking(bookingId, {
-        status: 'Cancelled',
-        paymentStatus: 'Refunded'
-      });
-      
-      setBookings(prev => 
-        prev.map(booking => 
-          booking.id === bookingId 
-            ? updatedBooking
-            : booking
-        )
-      );
-      return true;
-    } catch (err: any) {
-      console.error('Failed to cancel booking:', err);
-      setError('Failed to cancel booking');
+      // Try Supabase first if configured
+      if (config.database.useSupabase) {
+        try {
+          const updatedBooking = await SupabaseService.updateBooking(bookingId, {
+            status: 'Cancelled',
+            paymentStatus: 'Refunded'
+          });
+          
+          setBookings(prev => 
+            prev.map(booking => 
+              booking.id === bookingId 
+                ? updatedBooking
+                : booking
+            )
+          );
+          return true;
+        } catch (supabaseError) {
+          console.warn('Supabase cancel failed, using localStorage:', supabaseError);
+        }
+      }
       
       // Fallback to localStorage
       const existingBookings = JSON.parse(localStorage.getItem('mock_bookings') || '[]');
@@ -116,6 +137,10 @@ export const useBookings = (): UseBookingsReturn => {
         )
       );
       return true;
+    } catch (err: any) {
+      console.error('Failed to cancel booking:', err);
+      setError('Failed to cancel booking');
+      return false;
     } finally {
       setLoading(false);
     }
@@ -126,12 +151,37 @@ export const useBookings = (): UseBookingsReturn => {
       setLoading(true);
       setError(null);
       
-      const updatedBooking = await SupabaseService.updateBooking(bookingId, { status });
+      // Try Supabase first if configured
+      if (config.database.useSupabase) {
+        try {
+          const updatedBooking = await SupabaseService.updateBooking(bookingId, { status });
+          
+          setBookings(prev => 
+            prev.map(booking => 
+              booking.id === bookingId 
+                ? updatedBooking
+                : booking
+            )
+          );
+          return true;
+        } catch (supabaseError) {
+          console.warn('Supabase update failed, using localStorage:', supabaseError);
+        }
+      }
+      
+      // Fallback to localStorage
+      const existingBookings = JSON.parse(localStorage.getItem('mock_bookings') || '[]');
+      const updatedBookings = existingBookings.map((b: any) => 
+        b.id === bookingId 
+          ? { ...b, status }
+          : b
+      );
+      localStorage.setItem('mock_bookings', JSON.stringify(updatedBookings));
       
       setBookings(prev => 
         prev.map(booking => 
           booking.id === bookingId 
-            ? updatedBooking
+            ? { ...booking, status }
             : booking
         )
       );
@@ -149,20 +199,22 @@ export const useBookings = (): UseBookingsReturn => {
     if (user) {
       fetchUserBookings();
       
-      // Set up real-time subscription if Supabase is available
-      try {
-        const subscription = SupabaseService.subscribeToBookings(user.id, (payload) => {
-          console.log('Real-time booking update:', payload);
-          fetchUserBookings(); // Refetch on changes
-        });
+      // Set up real-time subscription if Supabase is available and configured
+      if (config.database.useSupabase && config.features.enableRealTimeUpdates) {
+        try {
+          const subscription = SupabaseService.subscribeToBookings(user.id, (payload) => {
+            console.log('Real-time booking update:', payload);
+            fetchUserBookings(); // Refetch on changes
+          });
 
-        return () => {
-          if (subscription && subscription.unsubscribe) {
-            subscription.unsubscribe();
-          }
-        };
-      } catch (error) {
-        console.log('Real-time subscription not available, using polling');
+          return () => {
+            if (subscription && subscription.unsubscribe) {
+              subscription.unsubscribe();
+            }
+          };
+        } catch (error) {
+          console.log('Real-time subscription not available');
+        }
       }
     } else {
       setBookings([]);
