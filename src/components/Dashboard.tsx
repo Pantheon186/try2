@@ -287,12 +287,12 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, onLogout }) => {
 
           {/* Cruise Cards Grid */}
           <div className="space-y-6">
-            {filteredCruises.map((cruise) => (
+            {filteredCruises.map((cruise) => {
               const userBooking = bookings.find(booking => 
                 booking.itemId === cruise.id && booking.status !== 'Cancelled'
               );
               
-              <CruiseCard
+              return <CruiseCard
                 key={cruise.id}
                 cruise={cruise}
                 onViewDetails={handleViewDetails}
@@ -300,7 +300,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, onLogout }) => {
                 isBooked={!!userBooking}
                 loading={loading}
               />
-            ))}
+            })}
           </div>
 
           {/* No Results Message */}
