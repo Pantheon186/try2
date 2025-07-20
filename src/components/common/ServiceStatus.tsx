@@ -42,30 +42,10 @@ const ServiceStatus: React.FC = () => {
         const localBookings = JSON.parse(localStorage.getItem('mock_bookings') || '[]');
         const localUsers = JSON.parse(localStorage.getItem('mock_users') || '[]');
         
-          const isHealthy = await SupabaseService.healthCheck();
-          if (isHealthy) {
-            const cruises = await SupabaseService.getAllCruises();
-            const users = await SupabaseService.getAllUsers();
-            setStatus({
-              supabaseConnected: true,
-              dataSource: 'supabase',
-              lastCheck: new Date(),
-              dataCount: { cruises: cruises.length, users: users.length, bookings: 0 }
-            });
-          } else {
-            setStatus({
-              supabaseConnected: false,
-              dataSource: 'localStorage',
-              lastCheck: new Date(),
-              dataCount: { cruises: 0, users: 0, bookings: 0 }
-            });
-          }
-        } else {
-          setStatus({
-            supabaseConnected: false,
-            dataSource: 'localStorage',
-            lastCheck: new Date(),
-            dataCount: { cruises: 0, users: 0, bookings: 0 }
+        setStatus({
+          supabaseConnected: false,
+          dataSource: 'localStorage',
+          lastCheck: new Date(),
           dataCount: {
             cruises: 0, // Cruises come from static data
             users: localUsers.length

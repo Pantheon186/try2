@@ -36,24 +36,6 @@ export class AppErrorHandler {
     return this.createError('DATABASE_ERROR', 'Database operation failed');
   }
 
-  static handleDatabaseError(error: any): AppError {
-    if (error.code) {
-      switch (error.code) {
-        case '23505':
-          return this.createError('DUPLICATE_ENTRY', 'This record already exists');
-        case '23503':
-          return this.createError('FOREIGN_KEY_VIOLATION', 'Referenced record does not exist');
-        case '42P01':
-          return this.createError('TABLE_NOT_FOUND', 'Database table not found');
-        case 'PGRST116':
-          return this.createError('NOT_FOUND', 'Record not found');
-        default:
-          return this.createError('DATABASE_ERROR', error.message || 'Database operation failed');
-      }
-    }
-    return this.createError('DATABASE_ERROR', 'Database operation failed');
-  }
-
   static handleApiError(error: any): AppError {
     // Rate limiting for repeated errors
     const errorKey = error.message || 'unknown';
