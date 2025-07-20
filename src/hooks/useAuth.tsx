@@ -41,9 +41,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      const response = await SupabaseService.getCurrentUser();
-      if (response.success) {
-        setUser(response.data);
+      // Only try Supabase if it's configured
+      if (config.database.useSupabase) {
+        try {
+          const response = await SupabaseService.getCurrentUser();
+          if (response.success && response.data) {
+            setUser(response.data);
+            return;
+          }
+        } catch (supabaseError) {
+          console.log('Supabase auth check failed, checking localStorage:', supabaseError);
+        }
+      }
+      
+      // Fallback to localStorage for demo
+      const userData = localStorage.getItem('user_data');
+      const authToken = localStorage.getItem('auth_token');
+      
+      if (userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          if (authToken) {
+            setUser(parsedUser);
+          } else {
+            // Clear invalid session
+            localStorage.removeItem('user_data');
+            setUser(null);
+          }
+        } catch {
+          localStorage.removeItem('user_data');
+          localStorage.removeItem('auth_token');
+          setUser(null);
+        }
       } else {
         setUser(null);
       }
@@ -51,16 +80,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Auth check error:', error);
       setError('Failed to check authentication status');
       setUser(null);
-      
-      // Fallback to localStorage for demo
-      const userData = localStorage.getItem('user_data');
-      if (userData) {
-        try {
-          setUser(JSON.parse(userData));
-        } catch {
-          localStorage.removeItem('user_data');
-        }
-      }
     } finally {
       setLoading(false);
     }

@@ -13,25 +13,37 @@ class SupabaseServiceClass {
   }
 
   private initializeClient(): void {
-    if (!config.database.useSupabase) {
-      console.log('Supabase disabled - using mock data service');
-      return;
-    }
-
-    if (!config.database.supabaseUrl || !config.database.supabaseAnonKey) {
-      console.warn('Supabase credentials not configured');
+    // Validate configuration first
+    if (!config.database.useSupabase || !config.database.supabaseUrl || !config.database.supabaseAnonKey) {
+      console.log('📦 Supabase disabled or not configured - using demo mode with mock data');
       return;
     }
 
     try {
       this.client = createClient(
         config.database.supabaseUrl,
-        config.database.supabaseAnonKey
+        config.database.supabaseAnonKey,
+        {
+          auth: {
+            autoRefreshToken: true,
+            persistSession: true,
+            detectSessionInUrl: false
+          },
+          realtime: {
+            params: {
+              eventsPerSecond: 10
+            }
+          }
+        }
       );
       this.isInitialized = true;
-      console.log('Supabase client initialized successfully');
+      console.log('✅ Supabase client initialized successfully');
+      
+      // Test the connection
+      this.testConnection();
     } catch (error) {
       console.error('Failed to initialize Supabase client:', error);
+      this.isInitialized = false;
       AppErrorHandler.logError(
         AppErrorHandler.createError('SUPABASE_INIT_ERROR', 'Failed to initialize Supabase client'),
         'SupabaseService.initializeClient'
@@ -39,9 +51,31 @@ class SupabaseServiceClass {
     }
   }
 
+  private async testConnection(): Promise<void> {
+    if (!this.client) return;
+    
+    try {
+      const { error } = await this.client.from('users').select('count').limit(1);
+      if (error) {
+        console.warn('⚠️ Supabase connection test failed:', error.message);
+        console.log('💡 This might be because:');
+        console.log('   1. The database tables don\'t exist yet');
+        console.log('   2. Row Level Security (RLS) is blocking access');
+        console.log('   3. The API key doesn\'t have the right permissions');
+        console.log('   4. The Supabase project is paused or deleted');
+        this.isInitialized = false;
+      } else {
+        console.log('✅ Supabase connection test successful');
+      }
+    } catch (error) {
+      console.warn('⚠️ Supabase connection test failed:', error);
+      this.isInitialized = false;
+    }
+  }
+
   private ensureInitialized(): void {
     if (!this.isInitialized || !this.client) {
-      throw new Error('Supabase client not initialized. Check configuration.');
+      throw new Error('Supabase client not initialized or connection failed. Using fallback mode.');
     }
   }
 
@@ -128,15 +162,19 @@ class SupabaseServiceClass {
   }
 
   async getCurrentUser(): Promise<{ success: boolean; data?: User; error?: string }> {
-    // Don't throw error if Supabase is not configured, just return no user
-    if (!this.isInitialized || !this.client) {
+    // If Supabase is not configured or initialized, return no user (demo mode)
+    if (!config.database.useSupabase || !this.isInitialized || !this.client) {
       return { success: true, data: undefined };
     }
     
     try {
       const { data: { user }, error } = await this.client!.auth.getUser();
       
-      if (error) throw error;
+      if (error) {
+        console.warn('Supabase auth error:', error.message);
+        return { success: true, data: undefined };
+      }
+      
       if (!user) {
         return { success: true, data: undefined };
       }
@@ -148,7 +186,10 @@ class SupabaseServiceClass {
         .eq('id', user.id)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.warn('Supabase profile fetch error:', profileError.message);
+        return { success: true, data: undefined };
+      }
 
       const userData: User = {
         id: profile.id,
@@ -168,9 +209,8 @@ class SupabaseServiceClass {
         success: true,
       };
     } catch (error: any) {
-      const appError = AppErrorHandler.handleDatabaseError(error);
-      AppErrorHandler.logError(appError, 'SupabaseService.getCurrentUser');
-      
+      console.warn('Supabase getCurrentUser failed, using demo mode:', error.message);
+
       return {
         success: false,
         error: appError.message,
@@ -181,6 +221,12 @@ class SupabaseServiceClass {
   // Cruise Methods
   async getAllCruises(): Promise<Cruise[]> {
     this.ensureInitialized();
+    
+    // Add connection test before making requests
+    const isHealthy = await this.healthCheck();
+    if (!isHealthy) {
+      throw new Error('Supabase connection not available');
+    }
     
     try {
       const { data, error } = await this.client!
@@ -219,6 +265,12 @@ class SupabaseServiceClass {
   async getAllHotels(): Promise<Hotel[]> {
     this.ensureInitialized();
     
+    // Add connection test before making requests
+    const isHealthy = await this.healthCheck();
+    if (!isHealthy) {
+      throw new Error('Supabase connection not available');
+    }
+    
     try {
       const { data, error } = await this.client!
         .from('hotels')
@@ -254,6 +306,12 @@ class SupabaseServiceClass {
   // Booking Methods
   async createBooking(bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>): Promise<Booking> {
     this.ensureInitialized();
+    
+    // Add connection test before making requests
+    const isHealthy = await this.healthCheck();
+    if (!isHealthy) {
+      throw new Error('Supabase connection not available');
+    }
     
     try {
       Validator.validateBooking(bookingData);
@@ -316,6 +374,12 @@ class SupabaseServiceClass {
   async getUserBookings(userId: string): Promise<Booking[]> {
     this.ensureInitialized();
     
+    // Add connection test before making requests
+    const isHealthy = await this.healthCheck();
+    if (!isHealthy) {
+      throw new Error('Supabase connection not available');
+    }
+    
     try {
       const { data, error } = await this.client!
         .from('bookings')
@@ -357,6 +421,12 @@ class SupabaseServiceClass {
   async getAllBookings(): Promise<Booking[]> {
     this.ensureInitialized();
     
+    // Add connection test before making requests
+    const isHealthy = await this.healthCheck();
+    if (!isHealthy) {
+      throw new Error('Supabase connection not available');
+    }
+    
     try {
       const { data, error } = await this.client!
         .from('bookings')
@@ -397,6 +467,12 @@ class SupabaseServiceClass {
   async getAllUsers(): Promise<User[]> {
     this.ensureInitialized();
     
+    // Add connection test before making requests
+    const isHealthy = await this.healthCheck();
+    if (!isHealthy) {
+      throw new Error('Supabase connection not available');
+    }
+    
     try {
       const { data, error } = await this.client!
         .from('users')
@@ -427,6 +503,12 @@ class SupabaseServiceClass {
   async getAllComplaints(): Promise<any[]> {
     this.ensureInitialized();
     
+    // Add connection test before making requests
+    const isHealthy = await this.healthCheck();
+    if (!isHealthy) {
+      throw new Error('Supabase connection not available');
+    }
+    
     try {
       const { data, error } = await this.client!
         .from('complaints')
@@ -445,6 +527,12 @@ class SupabaseServiceClass {
   async getAllOffers(): Promise<any[]> {
     this.ensureInitialized();
     
+    // Add connection test before making requests
+    const isHealthy = await this.healthCheck();
+    if (!isHealthy) {
+      throw new Error('Supabase connection not available');
+    }
+    
     try {
       const { data, error } = await this.client!
         .from('offers')
@@ -462,6 +550,12 @@ class SupabaseServiceClass {
 
   async updateBooking(bookingId: string, updates: Partial<Booking>): Promise<Booking> {
     this.ensureInitialized();
+    
+    // Add connection test before making requests
+    const isHealthy = await this.healthCheck();
+    if (!isHealthy) {
+      throw new Error('Supabase connection not available');
+    }
     
     try {
       const updateData: any = {};
@@ -512,7 +606,12 @@ class SupabaseServiceClass {
 
   // Real-time subscriptions
   subscribeToBookings(userId: string, callback: (payload: any) => void) {
-    this.ensureInitialized();
+    if (!this.isInitialized || !this.client) {
+      console.log('📡 Real-time subscriptions not available - Supabase not configured');
+      return {
+        unsubscribe: () => console.log('No subscription to unsubscribe from')
+      };
+    }
     
     return this.client!
       .channel('bookings')
@@ -532,6 +631,11 @@ class SupabaseServiceClass {
   // Health check
   async healthCheck(): Promise<boolean> {
     if (!this.isInitialized || !this.client) {
+      console.log('🔍 Health check: Supabase not initialized');
+      return false;
+    }
+    
+    if (!config.database.useSupabase) {
       return false;
     }
 
