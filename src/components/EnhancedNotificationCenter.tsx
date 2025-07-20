@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, AlertCircle, AlertTriangle, Info, Bell, BellRing, Trash2, MarkAsUnread } from 'lucide-react';
+import { X, CheckCircle, AlertCircle, AlertTriangle, Info, Bell, BellRing, Trash2, AreaChart as MarkAsUnread } from 'lucide-react';
 import { MockDataService } from '../services/MockDataService';
 import { MockNotification } from '../data/mockData';
 import { useAuth } from '../hooks/useAuth';
