@@ -45,7 +45,7 @@ import {
   Tabs,
   message
 } from 'antd';
-import { SupabaseService } from '../services/SupabaseService';
+import { MockDataService } from '../services/MockDataService';
 import LoadingSpinner from './common/LoadingSpinner';
 import { Formatters } from '../utils/formatters';
 
@@ -74,10 +74,10 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userRole, onL
       try {
         setLoading(true);
         const [usersData, bookingsData, complaintsData, offersData] = await Promise.all([
-          SupabaseService.getAllUsers(),
-          SupabaseService.getAllBookings(),
-          SupabaseService.getAllComplaints(),
-          SupabaseService.getAllOffers()
+          MockDataService.getAllUsers(),
+          MockDataService.getAllBookings(),
+          MockDataService.getAllComplaints(),
+          MockDataService.getAllOffers()
         ]);
         
         setUsers(usersData);
@@ -87,21 +87,10 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userRole, onL
       } catch (error) {
         console.error('Failed to load super admin data:', error);
         message.error('Failed to load dashboard data');
-        
-        // Fallback to mock data
-        setUsers([
-          { id: '1', name: 'John Smith', email: 'john@example.com', role: 'Travel Agent', status: 'Active', region: 'Mumbai' },
-          { id: '2', name: 'Sarah Johnson', email: 'sarah@example.com', role: 'Basic Admin', status: 'Active', region: 'Delhi' }
-        ]);
-        setBookings([
-          { id: '1', agentId: '1', itemName: 'Royal Caribbean Explorer', totalAmount: 90000, status: 'Confirmed' }
-        ]);
-        setComplaints([
-          { id: '1', customer_name: 'Rahul Gupta', subject: 'Service Issue', status: 'Open', priority: 'High' }
-        ]);
-        setOffers([
-          { id: '1', title: 'Early Bird Special', status: 'Active', discount_value: 15, discount_type: 'Percentage' }
-        ]);
+        setUsers([]);
+        setBookings([]);
+        setComplaints([]);
+        setOffers([]);
       } finally {
         setLoading(false);
       }

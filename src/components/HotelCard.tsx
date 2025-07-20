@@ -1,5 +1,7 @@
 import React from 'react';
 import { MapPin, Star, Eye, Bookmark, Wifi, Car, Dumbbell, Waves } from 'lucide-react';
+import ModernCard from './enhanced/ModernCard';
+import ModernButton from './enhanced/ModernButton';
 import { Hotel } from '../data/hotels';
 
 interface HotelCardProps {
@@ -44,7 +46,7 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onViewDetails, onBookmark 
   };
 
   return (
-    <div className="bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 hover:transform hover:scale-[1.02] mb-6">
+    <ModernCard className="overflow-hidden mb-6" padding="sm">
       {/* Horizontal Layout Container */}
       <div className="flex flex-col lg:flex-row">
         {/* Left Section - Hotel Details */}
@@ -151,21 +153,22 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onViewDetails, onBookmark 
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <button
+            <ModernButton
+              variant="primary"
+              icon={<Eye size={18} />}
               onClick={() => onViewDetails(hotel)}
-              className="flex-1 flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-3 px-6 rounded-lg transition-colors duration-200 font-medium"
+              className="flex-1"
             >
-              <Eye size={18} />
-              <span>View Details & Book</span>
-            </button>
-            <button
+              View Details & Book
+            </ModernButton>
+            <ModernButton
+              variant="secondary"
+              icon={<Bookmark size={18} />}
               onClick={handleBookmark}
-              className="flex items-center justify-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white py-3 px-4 rounded-lg transition-colors duration-200 font-medium"
             >
-              <Bookmark size={18} />
               <span className="hidden sm:inline">Save Hotel</span>
               <span className="sm:hidden">Save</span>
-            </button>
+            </ModernButton>
           </div>
         </div>
 
@@ -206,7 +209,7 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onViewDetails, onBookmark 
           </div>
         </div>
       </div>
-    </div>
+    </ModernCard>
   );
 };
 

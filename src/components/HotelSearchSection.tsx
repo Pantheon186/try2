@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search, MapPin } from 'lucide-react';
+import ModernCard from './enhanced/ModernCard';
 import { Validator } from '../utils/validation';
 
 const cities = [
@@ -58,9 +59,9 @@ const HotelSearchSection: React.FC<HotelSearchSectionProps> = ({ filters, onFilt
   };
 
   return (
-    <div className="bg-white/20 backdrop-blur-md rounded-lg border border-white/30 shadow-lg p-6 mb-6">
+    <ModernCard className="mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+        <h2 className="text-xl font-bold gradient-text flex items-center gap-2">
           <MapPin size={20} />
           Search & Filter Hotels
         </h2>
@@ -187,7 +188,7 @@ const HotelSearchSection: React.FC<HotelSearchSectionProps> = ({ filters, onFilt
           return null;
         })}
       </div>
-    </div>
+    </ModernCard>
   );
 };
 

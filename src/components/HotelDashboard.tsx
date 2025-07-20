@@ -4,9 +4,10 @@ import TopNavbar from './TopNavbar';
 import HotelSearchSection from './HotelSearchSection';
 import HotelCard from './HotelCard';
 import HotelModal from './HotelModal';
+import ReviewSystem from './ReviewSystem';
 import AgentPortal from './AgentPortal';
 import LoadingSpinner from './common/LoadingSpinner';
-import { SupabaseService } from '../services/SupabaseService';
+import { MockDataService } from '../services/MockDataService';
 import type { Hotel } from '../types';
 import { Validator } from '../utils/validation';
 
@@ -55,6 +56,7 @@ const HotelDashboard: React.FC<HotelDashboardProps> = ({ userRole, onLogout, onB
 
   // Modal state
   const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
+  const [showReviews, setShowReviews] = useState(false);
 
   // Profile view state
   const [showProfile, setShowProfile] = useState(false);
@@ -65,31 +67,12 @@ const HotelDashboard: React.FC<HotelDashboardProps> = ({ userRole, onLogout, onB
       try {
         setLoading(true);
         setError(null);
-        const hotelData = await SupabaseService.getAllHotels();
+        const hotelData = await MockDataService.getAllHotels();
         setHotels(hotelData);
       } catch (error) {
         console.error('Failed to load hotels:', error);
         setError('Failed to load hotels');
-        
-        // Fallback to mock data
-        const mockHotels = [
-          {
-            id: "1",
-            name: "The Oberoi Mumbai",
-            location: "Mumbai, Maharashtra",
-            image: "https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg",
-            starRating: 5,
-            pricePerNight: 25000,
-            availableRoomTypes: ["Deluxe Room", "Premier Room", "Luxury Suite", "Presidential Suite"],
-            mealPlans: ["Room Only", "Breakfast Included", "Half Board", "Full Board"],
-            amenities: ["Spa", "Pool", "Gym", "Wi-Fi", "AC", "Parking", "Pet Friendly", "Garden"],
-            availableFrom: ["2024-04-15", "2024-04-22", "2024-04-29", "2024-05-06"],
-            description: "Experience luxury redefined at The Oberoi Mumbai with panoramic views of the Arabian Sea.",
-            hotelType: "Luxury",
-            hotelChain: "Oberoi Hotels"
-          }
-        ];
-        setHotels(mockHotels);
+        setHotels([]);
       } finally {
         setLoading(false);
       }
@@ -141,6 +124,7 @@ const HotelDashboard: React.FC<HotelDashboardProps> = ({ userRole, onLogout, onB
 
   const handleCloseModal = () => {
     setSelectedHotel(null);
+    setShowReviews(false);
   };
 
   // Handle profile view
@@ -271,12 +255,40 @@ const HotelDashboard: React.FC<HotelDashboardProps> = ({ userRole, onLogout, onB
         </main>
       </div>
 
+      {/* Reviews Section */}
+      {selectedHotel && showReviews && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-white/30 shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-gray-200 p-6 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-800">
+                Reviews for {selectedHotel.name}
+              </h2>
+              <button
+                onClick={() => setShowReviews(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-6">
+              <ReviewSystem
+                itemType="Hotel"
+                itemId={selectedHotel.id}
+                itemName={selectedHotel.name}
+                canAddReview={true}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hotel Details Modal */}
       {selectedHotel && (
         <HotelModal
           hotel={selectedHotel}
           onClose={handleCloseModal}
           onBookingSuccess={handleBookingSuccess}
+          onShowReviews={() => setShowReviews(true)}
         />
       )}
     </div>

@@ -1,5 +1,7 @@
 import React from 'react';
 import { Calendar, Clock, MapPin, IndianRupee, Eye, X, Users, Star, CheckCircle } from 'lucide-react';
+import ModernCard from './enhanced/ModernCard';
+import ModernButton from './enhanced/ModernButton';
 import { Cruise } from '../data/cruises';
 
 interface CruiseCardProps {
@@ -47,7 +49,7 @@ const CruiseCard: React.FC<CruiseCardProps> = ({ cruise, onViewDetails, onCancel
   };
 
   return (
-    <div className={`bg-white/20 backdrop-blur-md rounded-2xl border border-white/30 shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 hover:transform hover:scale-[1.02] mb-6 ${isBooked ? 'ring-2 ring-green-400' : ''}`}>
+    <ModernCard className={`overflow-hidden mb-6 ${isBooked ? 'ring-2 ring-green-400' : ''}`} padding="sm">
       {/* Booking Status Banner */}
       {isBooked && (
         <div className="bg-green-500 text-white px-4 py-2 text-sm font-medium flex items-center gap-2">
@@ -166,24 +168,27 @@ const CruiseCard: React.FC<CruiseCardProps> = ({ cruise, onViewDetails, onCancel
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <button
+            <ModernButton
+              variant="primary"
+              icon={<Eye size={18} />}
               onClick={() => onViewDetails(cruise)}
               disabled={loading}
-              className="flex-1 flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-3 px-6 rounded-lg transition-colors duration-200 font-medium"
+              className="flex-1"
             >
-              <Eye size={18} />
-              <span>{isBooked ? 'View Booking Details' : 'View Details & Book'}</span>
-            </button>
+              {isBooked ? 'View Booking Details' : 'View Details & Book'}
+            </ModernButton>
             {isBooked && (
-              <button
+              <ModernButton
+                variant="outline"
+                icon={<X size={18} />}
                 onClick={handleCancel}
                 disabled={loading}
-                className="flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white py-3 px-4 rounded-lg transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                loading={loading}
+                className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
               >
-                <X size={18} />
-                <span className="hidden sm:inline">{loading ? 'Cancelling...' : 'Cancel Booking'}</span>
-                <span className="sm:hidden">{loading ? 'Cancelling...' : 'Cancel'}</span>
-              </button>
+                <span className="hidden sm:inline">Cancel Booking</span>
+                <span className="sm:hidden">Cancel</span>
+              </ModernButton>
             )}
           </div>
         </div>
@@ -234,7 +239,7 @@ const CruiseCard: React.FC<CruiseCardProps> = ({ cruise, onViewDetails, onCancel
           </div>
         </div>
       </div>
-    </div>
+    </ModernCard>
   );
 };
 

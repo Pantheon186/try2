@@ -9,6 +9,7 @@ interface CruiseModalProps {
   cruise: Cruise;
   onClose: () => void;
   onBookingSuccess?: (cruiseId: string) => void;
+  onShowReviews?: () => void;
   isBooked?: boolean;
 }
 
@@ -23,7 +24,7 @@ interface BookingForm {
   address: string;
 }
 
-const CruiseModal: React.FC<CruiseModalProps> = ({ cruise, onClose, onBookingSuccess, isBooked = false }) => {
+const CruiseModal: React.FC<CruiseModalProps> = ({ cruise, onClose, onBookingSuccess, onShowReviews, isBooked = false }) => {
   const { createBooking } = useBookings();
   const { showBookingSuccess, showBookingError } = useNotifications();
   const { user } = useAuth();
@@ -328,8 +329,19 @@ const CruiseModal: React.FC<CruiseModalProps> = ({ cruise, onClose, onBookingSuc
 
               {activeTab === 'reviews' && (
                 <div className="max-h-64 overflow-y-auto">
-                  <div className="text-center py-8 text-gray-500">
-                    <p>Reviews feature coming soon!</p>
+                  <div className="space-y-4">
+                    <button
+                      onClick={() => {
+                        onClose();
+                        onShowReviews?.();
+                      }}
+                      className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 font-medium"
+                    >
+                      View All Reviews
+                    </button>
+                    <p className="text-sm text-gray-600 text-center">
+                      See what other travelers are saying about {cruise.name}
+                    </p>
                   </div>
                 </div>
               )}

@@ -56,6 +56,14 @@
     animation: slideUp 0.3s ease-out;
   }
   
+  .animate-bounce-slow {
+    animation: bounce 2s infinite;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
   .glass-morphism {
     @apply bg-white/20 backdrop-blur-md border border-white/30;
   }
@@ -63,11 +71,27 @@
   .glass-morphism-dark {
     @apply dark:bg-gray-800/20 dark:backdrop-blur-md dark:border-gray-700/30;
   }
+  
+  .gradient-text {
+    @apply bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent;
+  }
+  
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-2xl hover:transform hover:scale-[1.02];
+  }
+  
+  .button-primary {
+    @apply bg-gradient-to-r from-blue-500 to-teal-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-teal-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105;
+  }
+  
+  .button-secondary {
+    @apply bg-white/20 backdrop-blur-md border border-white/30 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-white/30 transition-all duration-200;
+  }
 }
 
 /* Ant Design customizations */
 .ant-card {
-  @apply shadow-lg;
+  @apply shadow-lg transition-all duration-300 hover:shadow-xl;
 }
 
 .ant-card-head {
@@ -95,7 +119,34 @@
 }
 
 .ant-btn {
-  @apply transition-all duration-200;
+  @apply transition-all duration-200 hover:transform hover:scale-105;
+}
+
+.ant-btn-primary {
+  @apply bg-gradient-to-r from-blue-500 to-teal-500 border-none hover:from-blue-600 hover:to-teal-600;
+}
+
+/* Enhanced form styling */
+.ant-form-item-label > label {
+  @apply font-medium text-gray-700;
+}
+
+.ant-input:focus,
+.ant-select-focused .ant-select-selector {
+  @apply ring-2 ring-blue-500 ring-opacity-50 border-blue-500;
+}
+
+/* Enhanced table styling */
+.ant-table {
+  @apply rounded-lg overflow-hidden;
+}
+
+.ant-table-thead > tr > th {
+  @apply bg-gradient-to-r from-blue-50 to-teal-50 font-semibold;
+}
+
+.ant-table-tbody > tr:hover > td {
+  @apply bg-blue-50;
 }
 
 /* Loading animations */

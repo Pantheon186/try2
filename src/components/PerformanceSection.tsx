@@ -1,5 +1,7 @@
 import React from 'react';
 import { Award, Users, Star, Globe, Trophy, Heart, Shield, Clock } from 'lucide-react';
+import AnimatedCounter from './enhanced/AnimatedCounter';
+import ModernCard from './enhanced/ModernCard';
 
 const PerformanceSection: React.FC = () => {
   // Performance statistics and awards data
@@ -79,9 +81,10 @@ const PerformanceSection: React.FC = () => {
         {/* Main Statistics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
           {stats.map((stat, index) => (
-            <div
+            <ModernCard
               key={index}
-              className="group bg-white/60 backdrop-blur-md rounded-2xl border border-white/30 p-8 text-center hover:bg-white/80 transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105"
+              className="group text-center"
+              padding="lg"
             >
               {/* Icon with Gradient Background */}
               <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-r ${stat.color} text-white mb-6 group-hover:scale-110 transition-transform duration-300`}>
@@ -89,8 +92,13 @@ const PerformanceSection: React.FC = () => {
               </div>
               
               {/* Number */}
-              <div className="text-4xl font-bold text-gray-800 mb-2">
-                {stat.number}
+              <div className="text-4xl font-bold gradient-text mb-2">
+                <AnimatedCounter 
+                  value={parseInt(stat.number.replace(/[^\d]/g, '')) || 0}
+                  formatter={(val) => stat.number.includes('+') ? `${val.toLocaleString()}+` : 
+                              stat.number.includes('★') ? `${val.toFixed(1)}★` : 
+                              val.toLocaleString()}
+                />
               </div>
               
               {/* Label */}
@@ -102,14 +110,14 @@ const PerformanceSection: React.FC = () => {
               <p className="text-gray-600 text-sm leading-relaxed">
                 {stat.description}
               </p>
-            </div>
+            </ModernCard>
           ))}
         </div>
 
         {/* Awards and Recognition Section */}
-        <div className="bg-white/40 backdrop-blur-md rounded-2xl border border-white/30 p-8 md:p-12 shadow-xl">
+        <ModernCard className="shadow-xl" padding="lg" gradient>
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-gray-800 mb-4">
+            <h3 className="text-3xl font-bold gradient-text mb-4">
               Awards & Recognition
             </h3>
             <p className="text-gray-600 text-lg max-w-2xl mx-auto">
@@ -121,9 +129,9 @@ const PerformanceSection: React.FC = () => {
           {/* Awards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {achievements.map((achievement, index) => (
-              <div
+              <ModernCard
                 key={index}
-                className="bg-white/60 backdrop-blur-sm rounded-xl border border-white/30 p-6 text-center hover:bg-white/80 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
+                className="text-center"
               >
                 {/* Icon */}
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-teal-500 text-white mb-4">
@@ -139,28 +147,36 @@ const PerformanceSection: React.FC = () => {
                 <p className="text-gray-600 text-xs">
                   {achievement.organization}
                 </p>
-              </div>
+              </ModernCard>
             ))}
           </div>
-        </div>
+        </ModernCard>
 
         {/* Trust Indicators */}
         <div className="mt-16 text-center">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600 mb-1">24/7</div>
+              <div className="text-2xl font-bold gradient-text mb-1">
+                <AnimatedCounter value={24} formatter={(val) => `${val}/7`} />
+              </div>
               <div className="text-gray-600 text-sm">Customer Support</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-teal-600 mb-1">100%</div>
+              <div className="text-2xl font-bold gradient-text mb-1">
+                <AnimatedCounter value={100} formatter={(val) => `${val}%`} />
+              </div>
               <div className="text-gray-600 text-sm">Secure Booking</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600 mb-1">50+</div>
+              <div className="text-2xl font-bold gradient-text mb-1">
+                <AnimatedCounter value={50} formatter={(val) => `${val}+`} />
+              </div>
               <div className="text-gray-600 text-sm">Countries Covered</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600 mb-1">15+</div>
+              <div className="text-2xl font-bold gradient-text mb-1">
+                <AnimatedCounter value={15} formatter={(val) => `${val}+`} />
+              </div>
               <div className="text-gray-600 text-sm">Years Experience</div>
             </div>
           </div>

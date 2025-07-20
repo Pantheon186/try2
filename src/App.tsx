@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import ServiceStatus from './components/common/ServiceStatus';
-import NotificationCenter from './components/NotificationCenter';
+import EnhancedNotificationCenter from './components/EnhancedNotificationCenter';
+import Chatbot from './components/Chatbot';
 import FloatingHelp from './components/FloatingHelp';
 import { ThemeProvider } from './components/enhanced/ThemeProvider';
 import { SecurityProvider } from './components/enhanced/SecurityProvider';
@@ -87,7 +88,8 @@ const App: React.FC = () => {
                 )}
                 
                 {/* Global Components */}
-                <NotificationCenter />
+                <EnhancedNotificationCenter />
+                <Chatbot />
                 <FloatingHelp />
                 <ServiceStatus />
                 
@@ -138,6 +140,7 @@ const App: React.FC = () => {
               )}
               
               <ServiceStatus />
+              <Chatbot />
             </div>
           </SecurityProvider>
         </AuthProvider>

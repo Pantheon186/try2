@@ -11,6 +11,7 @@ interface HotelModalProps {
   hotel: Hotel;
   onClose: () => void;
   onBookingSuccess?: (hotelId: string) => void;
+  onShowReviews?: () => void;
   isBooked?: boolean;
 }
 
@@ -26,7 +27,7 @@ interface BookingForm {
   address: string;
 }
 
-const HotelModal: React.FC<HotelModalProps> = ({ hotel, onClose, onBookingSuccess, isBooked = false }) => {
+const HotelModal: React.FC<HotelModalProps> = ({ hotel, onClose, onBookingSuccess, onShowReviews, isBooked = false }) => {
   const { createBooking } = useBookings();
   const { showBookingSuccess, showBookingError } = useNotifications();
   const { user } = useAuth();
@@ -265,6 +266,19 @@ const HotelModal: React.FC<HotelModalProps> = ({ hotel, onClose, onBookingSucces
                     {amenity}
                   </span>
                 ))}
+              </div>
+              
+              {/* Reviews Button */}
+              <div className="mt-6">
+                <button
+                  onClick={() => {
+                    onClose();
+                    onShowReviews?.();
+                  }}
+                  className="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded-lg transition-colors duration-200 font-medium"
+                >
+                  View Guest Reviews
+                </button>
               </div>
             </div>
           </div>

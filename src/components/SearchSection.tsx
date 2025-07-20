@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search } from 'lucide-react';
+import ModernCard from './enhanced/ModernCard';
 import { Validator } from '../utils/validation';
 
 const destinations = [
@@ -59,13 +60,13 @@ const SearchSection: React.FC<SearchSectionProps> = ({ filters, onFiltersChange,
   };
 
   return (
-    <div className="bg-white/20 backdrop-blur-md rounded-lg border border-white/30 shadow-lg p-6 mb-6">
+    <ModernCard className="mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-800">Search & Filter Cruises</h2>
+        <h2 className="text-xl font-bold gradient-text">Search & Filter Cruises</h2>
         {(filters.searchText || filters.destination !== 'All Destinations' || filters.cruiseLine !== 'All Cruise Lines' || filters.shipType !== 'All Ship Types' || filters.month !== 'All Months') && (
           <button
             onClick={clearFilters}
-            className="text-sm text-blue-600 hover:text-blue-700 transition-colors"
+            className="text-sm text-blue-600 hover:text-blue-700 transition-colors font-medium"
           >
             Clear All Filters
           </button>
@@ -173,7 +174,7 @@ const SearchSection: React.FC<SearchSectionProps> = ({ filters, onFiltersChange,
           return null;
         })}
       </div>
-    </div>
+    </ModernCard>
   );
 };
 

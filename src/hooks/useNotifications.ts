@@ -1,5 +1,6 @@
 // Notifications Hook - Manages in-app notifications and alerts
 import { useState, useCallback, useEffect } from 'react';
+import { useToastNotifications } from '../components/enhanced/ToastNotifications';
 import { config } from '../config/environment';
 
 export interface Notification {
@@ -22,6 +23,7 @@ export interface NotificationAction {
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const toast = useToastNotifications();
 
   // Update unread count when notifications change
   useEffect(() => {
@@ -95,18 +97,22 @@ export const useNotifications = () => {
 
   // Convenience methods for different notification types
   const showSuccess = useCallback((title: string, message: string, duration?: number) => {
+    toast.showSuccess(title, message, duration);
     return addNotification('success', title, message, duration);
   }, [addNotification]);
 
   const showError = useCallback((title: string, message: string, duration?: number) => {
+    toast.showError(title, message, duration);
     return addNotification('error', title, message, duration);
   }, [addNotification]);
 
   const showWarning = useCallback((title: string, message: string, duration?: number) => {
+    toast.showWarning(title, message, duration);
     return addNotification('warning', title, message, duration);
   }, [addNotification]);
 
   const showInfo = useCallback((title: string, message: string, duration?: number) => {
+    toast.showInfo(title, message, duration);
     return addNotification('info', title, message, duration);
   }, [addNotification]);
 
@@ -240,6 +246,8 @@ export const useNotifications = () => {
   }, [addNotification]);
   return {
     notifications,
+    toasts: toast.toasts,
+    removeToast: toast.removeToast,
     unreadCount,
     addNotification,
     removeNotification,

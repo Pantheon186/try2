@@ -2,11 +2,14 @@
 import React from 'react';
 import { X, CheckCircle, AlertCircle, AlertTriangle, Info, Bell } from 'lucide-react';
 import { useNotifications, type Notification } from '../hooks/useNotifications';
+import ToastNotifications from './enhanced/ToastNotifications';
 import { Formatters } from '../utils/formatters';
 
 const NotificationCenter: React.FC = () => {
   const { 
     notifications, 
+    toasts,
+    removeToast,
     unreadCount, 
     removeNotification, 
     markAsRead, 
@@ -79,6 +82,8 @@ const NotificationCenter: React.FC = () => {
   }
 
   return (
+    <>
+      <ToastNotifications toasts={toasts} onRemoveToast={removeToast} />
     <div className="fixed top-4 right-4 z-50 w-80">
       {/* Header */}
       <div className="bg-white/90 backdrop-blur-md border border-white/30 rounded-t-lg p-4 shadow-lg">
@@ -186,6 +191,7 @@ const NotificationCenter: React.FC = () => {
           </div>
         )}
       </div>
+    </>
 
       {/* Footer */}
       {notifications.length > 10 && (

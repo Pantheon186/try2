@@ -6,11 +6,12 @@ import SearchSection from './SearchSection';
 import CruiseCard from './CruiseCard';
 import CruiseModal from './CruiseModal';
 import LoadingSpinner from './common/LoadingSpinner';
+import ReviewSystem from './ReviewSystem';
 import AgentPortal from './AgentPortal';
 import HotelDashboard from './HotelDashboard';
 import BasicAdminDashboard from './BasicAdminDashboard';
 import SuperAdminDashboard from './SuperAdminDashboard';
-import { SupabaseService } from '../services/SupabaseService';
+import { MockDataService } from '../services/MockDataService';
 import { config } from '../config/environment';
 import { useAuth } from '../hooks/useAuth';
 import { useBookings } from '../hooks/useBookings';
@@ -44,6 +45,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, onLogout }) => {
 
   // Modal State
   const [selectedCruise, setSelectedCruise] = useState<Cruise | null>(null);
+  const [showReviews, setShowReviews] = useState(false);
 
   // Navigation State
   const [showProfile, setShowProfile] = useState(false);
@@ -56,31 +58,14 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, onLogout }) => {
     try {
       setCruisesLoading(true);
       
-      // Try Supabase first if configured
-      if (config.database.useSupabase) {
-        try {
-          const cruises = await SupabaseService.getAllCruises();
-          setCruiseData(cruises);
-          return;
-        } catch (supabaseError) {
-          console.warn('Supabase cruises fetch failed, using fallback data:', supabaseError);
-        }
-      }
-      
-      // Fallback to mock data from the original cruises file
-      const { cruises } = await import('../data/cruises');
+      // Use MockDataService for cruises
+      const cruises = await MockDataService.getAllCruises();
       setCruiseData(cruises);
+      
     } catch (error) {
       console.error('Failed to load cruises:', error);
       showError('Loading Error', 'Failed to load cruise data. Please refresh the page.');
-      
-      // Final fallback to basic mock data
-      try {
-        const { cruises } = await import('../data/cruises');
-        setCruiseData(cruises);
-      } catch {
-        setCruiseData([]);
-      }
+      setCruiseData([]);
     } finally {
       setCruisesLoading(false);
     }
@@ -146,6 +131,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, onLogout }) => {
 
   const handleCloseModal = useCallback(() => {
     setSelectedCruise(null);
+    setShowReviews(false);
   }, []);
 
   // Navigation Handlers
@@ -385,6 +371,18 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, onLogout }) => {
             </>
           )}
 
+          {/* Reviews Section */}
+          {selectedCruise && showReviews && (
+            <div className="mt-8">
+              <ReviewSystem
+                itemType="Cruise"
+                itemId={selectedCruise.id}
+                itemName={selectedCruise.name}
+                canAddReview={true}
+              />
+            </div>
+          )}
+
           {(loading || bookingsLoading) && (
             <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-40">
               <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-white/30 p-6 shadow-2xl">
@@ -400,6 +398,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userRole, onLogout }) => {
           cruise={selectedCruise}
           onClose={handleCloseModal}
           onBookingSuccess={handleBookingSuccess}
+          onShowReviews={() => setShowReviews(true)}
           isBooked={!!bookings.find(booking => 
             booking.itemId === selectedCruise.id && booking.status !== 'Cancelled'
           )}

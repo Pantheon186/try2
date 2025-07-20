@@ -1,6 +1,6 @@
 // Service Status Indicator Component
 import React, { useState, useEffect } from 'react';
-import { SupabaseService } from '../../services/SupabaseService';
+import { MockDataService } from '../../services/MockDataService';
 
 const ServiceStatus: React.FC = () => {
   const [status, setStatus] = useState({
@@ -19,50 +19,24 @@ const ServiceStatus: React.FC = () => {
     // Check service connection and data status
     const checkConnection = async () => {
       try {
-        // Only check Supabase if it's configured
-        if (!import.meta.env.VITE_USE_SUPABASE || import.meta.env.VITE_USE_SUPABASE === 'false') {
-          // Demo mode
-          const localBookings = JSON.parse(localStorage.getItem('mock_bookings') || '[]');
-          
+        // Use MockDataService
+        const isHealthy = await MockDataService.healthCheck();
+        const cruises = await MockDataService.getAllCruises();
+        const users = await MockDataService.getAllUsers();
+        
+        if (isHealthy) {
           setStatus({
             supabaseConnected: false,
             dataSource: 'localStorage',
             lastCheck: new Date(),
             dataCount: {
-              cruises: 10, // Static cruises from data file
-              users: localBookings.length
+              cruises: cruises.length,
+              users: users.length
             }
           });
-          return;
-        }
-        
-        const isHealthy = await SupabaseService.healthCheck();
-        
-        if (isHealthy) {
-          try {
-            const cruises = await SupabaseService.getAllCruises();
-            const users = await SupabaseService.getAllUsers();
-            
-            setStatus({
-              supabaseConnected: true,
-              dataSource: 'supabase',
-              lastCheck: new Date(),
-              dataCount: {
-                cruises: cruises.length,
-                users: users.length
-              }
-            });
-          } catch (error) {
-            console.warn('Failed to fetch Supabase data:', error);
-            throw error;
-          }
-        } else {
-          throw new Error('Supabase not healthy');
         }
       } catch (error) {
-        console.log('🔄 Falling back to demo mode due to Supabase connection issues');
-        // Check local storage
-        const localBookings = JSON.parse(localStorage.getItem('mock_bookings') || '[]');
+        console.log('🔄 MockDataService connection check failed');
         
         setStatus({
           supabaseConnected: false,
@@ -70,7 +44,7 @@ const ServiceStatus: React.FC = () => {
           lastCheck: new Date(),
           dataCount: {
             cruises: 10, // Static cruises from data file
-            users: localBookings.length
+            users: 15 // Mock users
           }
         });
       }
@@ -100,10 +74,8 @@ const ServiceStatus: React.FC = () => {
 
   const getStatusText = () => {
     switch (status.dataSource) {
-      case 'supabase':
-        return `✅ Supabase Live (${status.dataCount.users} users, ${status.dataCount.cruises} cruises)`;
       case 'localStorage':
-        return `📦 Demo Mode (${status.dataCount.cruises} cruises available)`;
+        return `📦 Mock Data Mode (${status.dataCount.users} users, ${status.dataCount.cruises} cruises)`;
       default:
         return '❌ No Data Source';
     }
