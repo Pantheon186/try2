@@ -128,7 +128,10 @@ class SupabaseServiceClass {
   }
 
   async getCurrentUser(): Promise<{ success: boolean; data?: User; error?: string }> {
-    this.ensureInitialized();
+    // Don't throw error if Supabase is not configured, just return no user
+    if (!this.isInitialized || !this.client) {
+      return { success: true, data: undefined };
+    }
     
     try {
       const { data: { user }, error } = await this.client!.auth.getUser();
